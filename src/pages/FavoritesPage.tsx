@@ -1,15 +1,20 @@
 import {useEffect, useState} from 'react';
 import {apiFetch} from '../auth/AuthContext';
 import type {Note} from "../models/types.ts";
+import {useNavigate} from "react-router-dom";
 
 
 export default function FavoritesPage() {
+
+    const navigate = useNavigate();
+
+    const [folders, setFolders] = useState<{ id: number; name: string }[]>([]);    
     const [notes, setNotes] = useState<Note[]>([]);
 
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
 
-    const load = async () => {
+    const loadFavNotes = async () => {
         setLoading(true);
 
         try {
@@ -22,8 +27,18 @@ export default function FavoritesPage() {
         }
     };
 
+    const loadFolders = async () => {
+        try {
+            const allFolders = await apiFetch<{ id: number; name: string }[]>('/folders');
+            setFolders(allFolders);
+        } catch (error) {
+            console.error('Error fetching folders:', (error as Error).message);
+        }
+    };
+
     useEffect(() => {
-        load();
+        loadFavNotes();
+        loadFolders();
     }, []);
 
     const toggleFavorite = async (noteId: number) => {
@@ -85,7 +100,7 @@ export default function FavoritesPage() {
                         {notes.map((note) => (
                             <div
                                 key={note.id}
-                                className="bg-secondary rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-border"
+                                className="bg-secondary rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-white"
                             >
                                 <div className="p-6">
                                     <div className="flex items-start justify-between mb-3">
@@ -94,7 +109,7 @@ export default function FavoritesPage() {
                                         </h3>
                                         <button
                                             onClick={() => toggleFavorite(note.id)}
-                                            className="flex-shrink-0 ml-2 text-warning hover:text-yellow-600 transition-colors"
+                                            className="flex-shrink-0 ml-2 text-white hover:text-yellow-600 transition-colors"
                                             title="Remove from favorites"
                                         >
                                             <svg
@@ -110,7 +125,7 @@ export default function FavoritesPage() {
                                     <p className="text-white text-sm line-clamp-3 whitespace-pre-wrap break-words">
                                         {note.content || 'No content'}
                                     </p>
-                                    <div className="mt-4 pt-4 border-t border-border">
+                                    <div className="mt-4 pt-4 border-t border-white">
                                         <p className="text-xs text-white">
                                             Updated {new Date(note.updated_at).toLocaleDateString('en-US', {
                                             month: 'short',
@@ -121,12 +136,13 @@ export default function FavoritesPage() {
                                     </div>
                                 </div>
                                 <div
-                                    className="bg-primary/50 px-6 py-3 border-t border-border">
+                                    className="bg-primary/50 px-6 py-3 border-t border-white">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-medium text-accent">
+                                        <span className="text-xs font-medium text-white">
                                             {note.folder_id ? `Folder #${note.folder_id}` : 'No folder'}
                                         </span>
-                                        <button className="text-xs text-accent hover:text-blue-500 font-medium">
+                                        <button className="text-xs text-white hover:text-blue-500 font-medium"
+                                            onClick={() => navigate(`/folders/${note.folder_id}`)}>
                                             View →
                                         </button>
                                     </div>

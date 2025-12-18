@@ -20,6 +20,8 @@ export default function ProfilePage() {
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
 
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
     const load = async () => {
         try {
             const data = await apiFetch<Profile>('/profile');
@@ -80,16 +82,22 @@ export default function ProfilePage() {
         }
     };
 
-    const deleteAccount = async () => {
-        if (!confirm('Delete your account? This cannot be undone. All your folders and notes will be permanently deleted.'))
-            return;
+    const openDeleteModal = () => {
+        setIsDeleteModalOpen(true);
+    };
 
+    const closeDeleteModal = () => {
+        setIsDeleteModalOpen(false);
+    };
+
+    const confirmDeleteAccount = async () => {
         try {
             await apiFetch('/profile', {method: 'DELETE'});
             logout();
             navigate('/auth');
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Failed to delete account');
+            closeDeleteModal();
         }
     };
 
@@ -274,7 +282,7 @@ export default function ProfilePage() {
                                 <p className="text-sm text-black">Permanently delete your account and all data</p>
                             </div>
                             <button
-                                onClick={deleteAccount}
+                                onClick={openDeleteModal}
                                 className="px-6 py-3 bg-red-950 text-white font-semibold rounded-lg hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-danger transition"
                             >
                                 Delete Account
@@ -283,6 +291,48 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </div>
+
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-secondary rounded-lg shadow-xl max-w-md w-full border border-white">
+                        <div className="p-6">
+                            <h3 className="text-xl font-semibold text-white mb-4">Delete Account</h3>
+                            <div className="space-y-4">
+                                <div className="flex items-start gap-3 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+                                    <svg className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <div>
+                                        <p className="text-red-300 font-medium mb-1">Warning: This action cannot be undone</p>
+                                        <p className="text-red-200/80 text-sm">
+                                            All your folders, notes, and account data will be permanently deleted.
+                                        </p>
+                                    </div>
+                                </div>
+                                <p className="text-white text-base">
+                                    Are you absolutely sure you want to delete your account?
+                                </p>
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={closeDeleteModal}
+                                        className="px-6 py-3 border border-white text-white font-semibold rounded-lg hover:bg-border focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={confirmDeleteAccount}
+                                        className="px-6 py-3 bg-red-950 text-white font-semibold rounded-lg hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-danger transition"
+                                    >
+                                        Delete Account
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

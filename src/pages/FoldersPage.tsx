@@ -1,7 +1,7 @@
-import React, {useEffect, useState} from 'react';
-import {Link} from 'react-router-dom';
-import {apiFetch} from '../auth/AuthContext';
-import type {Folder} from "../models/types.ts";
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { apiFetch } from '../auth/AuthContext';
+import type { Folder } from "../models/types.ts";
 import Layout from '../components/layout/Layout';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -20,13 +20,16 @@ export default function FoldersPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
 
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [folderToDelete, setFolderToDelete] = useState<number | null>(null);
+
     const load = async () => {
         setLoading(true);
 
         try {
             const data = await apiFetch<Folder[]>('/folders');
             const arr = Array.isArray(data) ? data : (data && Array.isArray((data as any).folders) ? (data as any).folders : []);
-            setFolders(arr.map((f: any) => ({id: f.id, name: f.name, createdAt: f.createdAt ?? f.created_at})));
+            setFolders(arr.map((f: any) => ({ id: f.id, name: f.name, createdAt: f.createdAt ?? f.created_at })));
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Failed to load folders');
         } finally {
@@ -41,7 +44,7 @@ export default function FoldersPage() {
     const create = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await apiFetch('/folders', {method: 'POST', body: JSON.stringify({name})});
+            await apiFetch('/folders', { method: 'POST', body: JSON.stringify({ name }) });
             setName('');
             await load();
         } catch (error) {
@@ -68,7 +71,7 @@ export default function FoldersPage() {
         try {
             await apiFetch(`/folders/${editingFolder.id}`, {
                 method: 'PUT',
-                body: JSON.stringify({name: editName}),
+                body: JSON.stringify({ name: editName }),
             });
             closeEditModal();
             await load();
@@ -77,15 +80,27 @@ export default function FoldersPage() {
         }
     };
 
-    const remove = async (id: number) => {
-        if (!confirm('Delete this folder and all its notes?')) return;
+    const remove = (id: number) => {
+        setFolderToDelete(id);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (folderToDelete === null) return;
 
         try {
-            await apiFetch(`/folders/${id}`, {method: 'DELETE'});
+            await apiFetch(`/folders/${folderToDelete}`, { method: 'DELETE' });
             await load();
+            closeDeleteModal();
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Failed to delete folder');
+            closeDeleteModal();
         }
+    };
+
+    const closeDeleteModal = () => {
+        setIsDeleteModalOpen(false);
+        setFolderToDelete(null);
     };
 
     if (loading) {
@@ -93,7 +108,7 @@ export default function FoldersPage() {
             <Layout>
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <div className="flex flex-col items-center gap-3">
-                        <Spinner size="lg"/>
+                        <Spinner size="lg" />
                         <p className="text-text-secondary">Loading folders...</p>
                     </div>
                 </div>
@@ -121,8 +136,8 @@ export default function FoldersPage() {
                         </div>
                         <Button type="submit" variant="primary" className="bg-amber-500">
                             <svg className="w-5 h-5 mr-2 " fill="currentColor" viewBox="0 0 24 24"
-                                 stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+                                stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
                             Create
                         </Button>
@@ -139,7 +154,7 @@ export default function FoldersPage() {
                     <div className="bg-secondary rounded-lg shadow-sm p-12 text-center border border-border ">
                         <div className="flex justify-center mb-4">
                             <svg className="w-16 h-16 text-text-secondary" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor">
+                                stroke="currentColor">
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
@@ -184,10 +199,10 @@ export default function FoldersPage() {
                                             </h3>
                                             <p className="text-xs text-text-secondary mt-2">
                                                 Created {new Date(folder.created_at).toLocaleDateString('en-US', {
-                                                month: 'short',
-                                                day: 'numeric',
-                                                year: 'numeric',
-                                            })}
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    year: 'numeric',
+                                                })}
                                             </p>
                                         </div>
                                     </div>
@@ -201,7 +216,7 @@ export default function FoldersPage() {
                                     >
                                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                     </button>
                                     <button
@@ -211,7 +226,7 @@ export default function FoldersPage() {
                                     >
                                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>
                                     </button>
                                 </div>
@@ -221,6 +236,7 @@ export default function FoldersPage() {
                 )}
             </div>
 
+            {/* Edit Modal */}
             <Modal isOpen={isModalOpen} onClose={closeEditModal} title="Edit Folder">
                 <form onSubmit={saveEdit} className="space-y-4">
                     <Input
@@ -240,6 +256,42 @@ export default function FoldersPage() {
                     </div>
                 </form>
             </Modal>
+
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-secondary rounded-lg shadow-xl max-w-md w-full border border-white">
+                        <div className="p-6">
+                            <h3 className="text-xl font-semibold text-white mb-4">
+                                Delete Folder
+                            </h3>
+
+                            <div className="space-y-4">
+                                <p className="text-text-secondary text-base">
+                                    Are you sure you want to delete this folder and all its notes? This action cannot be undone.
+                                </p>
+
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={closeDeleteModal}
+                                    >
+                                        Cancel
+                                    </Button>
+
+                                    <Button
+                                        type="button"
+                                        onClick={confirmDelete}
+                                        className="bg-danger hover:bg-red-700 text-white"
+                                    >
+                                        Delete
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </Layout>
     );
 }
